@@ -113,26 +113,46 @@ app.get("/sign_up", (req, res) => {
 
     const data = req.query;
 
-    connection.query(`INSERT INTO userdetails (FirstName, MailId , Passsword , UserId) VALUES ('${data.FirstName}', '${data.MailId}', '${data.Password}', "NA-${data.MailId}");`, (err, result) => {
-        if (err) {
+
+    connection.query(`select UserId from userdetails where MailId = "${data.MailId}";` , (err,result)=>{
+        if(err)
+        {
             res.status(401).send();
-
         }
+        else
+        {
+            if(result.length==0)
+            {
+                connection.query(`INSERT INTO userdetails (FirstName, MailId , Passsword , UserId) VALUES ('${data.FirstName}', '${data.MailId}', '${data.Password}', "NA-${data.MailId}");`, (errr, results) => {
+                    if (errr) {
+                        res.status(401).send();
+            
+                    }
+            
+                    else {
+                        var UserId = `NA-${data.MailId}`;
+                        Jwt.sign({ UserId }, jwtKey, (e, token) => {
+                            if (e) {
+                                res.status(401).send();
+                            }
+            
+                            else {
+                                res.send({UserId: UserId, token: token });
+                            }
+                        })
+                    }
+            
+                })
 
-        else {
-            var UserId = `NA-${data.MailId}`;
-            Jwt.sign({ UserId }, jwtKey, (e, token) => {
-                if (e) {
-                    res.status(401).send();
-                }
+            }
 
-                else {
-                    res.send({UserId: UserId, token: token });
-                }
-            })
+            else
+            {
+                res.send({UserId: "Email Id Used", token: "" });
+            }
         }
-
     })
+   
 })
 
 app.get("/user_name",VerifyToken,(req,res)=>{
