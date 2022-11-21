@@ -8,13 +8,16 @@ var Jwt = require('jsonwebtoken');
 const { verify } = require('crypto');
 var jwtKey = "Key-NewsApp";
 
+const bodyParser = require('body-parser')
+
 
 app.use(cors());
+app.use(bodyParser.json())
 
 var connection = mysql.createConnection({
     host: "localhost",
     user: "root",
-    password: "root",
+    password: "password",
     database: "project20222402",
     insecureAuth: true
 });
@@ -258,6 +261,33 @@ app.get("/edit_password", (req, res) => {
     }
 })
 
+app.post("/rate", (req,res) => {
+    const data = req.body
+    connection.query(`INSERT INTO news_cards VALUES ("${data.UserId}", "${data.author}", "${data.content}", "${data.description}", "${data.publishedAt}", "${data.title}", "${data.url}", "${data.urlToImage}", "${data.ratings}");`, (err, results) => {
+        if(err)
+        {
+            res.status(500).send(err);
+        }
+        else
+        {
+            res.status(200).send({ msg: results })
+        }
+    });    
+})
+
+app.get("/rate", (req,res) => {
+    const UserId = req.body.UserId;
+    connection.query(`SELECT * FROM news_cards WHERE UserId="${UserId}";`, (err, results) => {
+        if(err)
+        {
+            res.status(500).send(err);
+        }
+        else
+        {
+            res.status(200).send({ msg: results })
+        }
+    });
+})
 
 function VerifyToken(req, res, next) {
     let token = req.headers['authorization'];
