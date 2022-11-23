@@ -7,12 +7,11 @@ var cors = require('cors');
 var Jwt = require('jsonwebtoken');
 const { verify } = require('crypto');
 var jwtKey = "Key-NewsApp";
-
 const bodyParser = require('body-parser')
-
+const nodemailer = require('nodemailer');
 
 app.use(cors());
-app.use(bodyParser.json())
+app.use(express.json())
 
 var connection = mysql.createConnection({
     host: "localhost",
@@ -263,7 +262,7 @@ app.get("/edit_password", (req, res) => {
 
 app.post("/rate", (req,res) => {
     const data = req.body
-    connection.query(`INSERT INTO news_cards VALUES ("${data.UserId}", "${data.author}", "${data.content}", "${data.description}", "${data.publishedAt}", "${data.title}", "${data.url}", "${data.urlToImage}", "${data.ratings}");`, (err, results) => {
+    connection.query(`INSERT INTO news_cards VALUES ("${data.UserId}", "${data.author}", "${data.content}", "${data.description}", "${data.publishedAt}", "${data.title}", "${data.url}", "${data.urlToImage}", "${data.ratings}", "${data.watchList}");`, (err, results) => {
         if(err)
         {
             res.status(500).send(err);
@@ -276,8 +275,8 @@ app.post("/rate", (req,res) => {
 })
 
 app.get("/rate", (req,res) => {
-    const UserId = req.body.UserId;
-    connection.query(`SELECT * FROM news_cards WHERE UserId="${UserId}";`, (err, results) => {
+    const UserId = req.query.UserId;
+    connection.query(`SELECT * FROM news_cards WHERE UserId="${UserId}" AND ratings>0;`, (err, results) => {
         if(err)
         {
             res.status(500).send(err);
@@ -287,6 +286,59 @@ app.get("/rate", (req,res) => {
             res.status(200).send({ msg: results })
         }
     });
+})      
+
+app.post("/watch", (req,res)=> {
+    const data = req.body
+    connection.query(`INSERT INTO news_cards VALUES ("${data.UserId}", "${data.author}", "${data.content}", "${data.description}", "${data.publishedAt}", "${data.title}", "${data.url}", "${data.urlToImage}", "${data.ratings}", "b${data.watchList}");`, (err, results) => {
+        if(err)
+        {
+            res.status(500).send(err);
+        }
+        else
+        {
+            res.status(200).send({ msg: results })
+        }
+    });
+})
+
+app.get("/watch", (req,res) => {
+    const UserId = req.query.UserId;
+    const query = `SELECT * FROM news_cards WHERE UserId="${UserId}" AND watchList=1;`    
+    connection.query(query, (err, results) => {
+        if(err)
+        {
+            res.status(500).send(err);
+        }
+        else
+        {
+            console.log(results);
+            res.status(200).send({ msg: results })
+        }
+    });
+})
+
+app.post("/send_invite", async(req,res) => {
+    const sender = req.body.senderMail;
+    const receiver = req.body.receiverMail;
+    let testAccount = await nodemailer.createTestAccount();
+    let transporter = nodemailer.createTransport({
+        host: "smtp.ethereal.email",
+        port: 587,
+        secure: false, // true for 465, false for other ports
+        auth: {
+          user: testAccount.user, // generated ethereal user
+          pass: testAccount.pass, // generated ethereal password
+        },
+      });
+      let info = await transporter.sendMail({
+        from: `${sender}`, // sender address
+        to: `${receiver}`, // list of receivers
+        subject: "Join News App", // Subject line
+        html: "<b>Accept NewsApp invite </b>", // html body
+      });
+      console.log("Message sent: %s", info.messageId);
+      res.status(200).send({msg: "Email Sent"})
 })
 
 function VerifyToken(req, res, next) {
