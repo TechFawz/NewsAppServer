@@ -290,7 +290,7 @@ app.get("/rate", (req,res) => {
 
 app.post("/watch", (req,res)=> {
     const data = req.body
-    connection.query(`INSERT INTO news_cards VALUES ("${data.UserId}", "${data.author}", "${data.content}", "${data.description}", "${data.publishedAt}", "${data.title}", "${data.url}", "${data.urlToImage}", "${data.ratings}", "b${data.watchList}");`, (err, results) => {
+    connection.query(`INSERT INTO news_cards VALUES ("${data.UserId}", "${data.author}", "${data.content}", "${data.description}", "${data.publishedAt}", "${data.title}", "${data.url}", "${data.urlToImage}", "${data.ratings}", "${data.watchList}");`, (err, results) => {
         if(err)
         {
             res.status(500).send(err);
@@ -339,6 +339,43 @@ app.post("/send_invite", async(req,res) => {
       });
       console.log("Message sent: %s", info.messageId);
       res.status(200).send({msg: "Email Sent"})
+})
+
+
+app.post("/user-category", (req,res) => {
+    const newsCategories = (req.body.newsCategories).join();
+    const UserId = req.query.UserId;
+    console.log(newsCategories)
+    console.log(UserId)
+    const query = `UPDATE userdetails SET newsCategories="${newsCategories}" WHERE UserId="${UserId}";`
+    console.log(query)
+    connection.query(query, (err, results) => {
+        if(err)
+        {
+            res.status(500).send(err);
+        }
+        else
+        {            
+            res.status(200).send({ msg: results })
+        }
+    })
+})
+
+app.get("/user-category",(req,res) => {
+    const UserId = req.query.UserId;
+    const query = `SELECT newsCategories from userdetails WHERE UserId="${UserId}";`
+    connection.query(query, (err, results) => {
+        if(err)
+        {
+            res.status(500).send(err);
+        }
+        else
+        {
+            console.log(results[0].newsCategories)
+            const newsCategories = (results[0].newsCategories).split(',');
+            res.status(200).send({ msg: newsCategories })
+        }
+    })
 })
 
 function VerifyToken(req, res, next) {
