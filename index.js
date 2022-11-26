@@ -378,6 +378,101 @@ app.get("/user-category",(req,res) => {
     })
 })
 
+app.post("/follow", (req,res) => {
+    const follower = req.body.followerId;
+    const UserId = req.body.UserId;
+    const query = `SELECT followerCount from userdetails WHERE UserId="${UserId}";`    
+    connection.query(query, (err, followerCount) => {
+        if(err)
+        {
+            res.status(500).send(err);
+        }
+        else
+        {
+            followerCount = followerCount[0].followerCount
+            if (isNaN(followerCount)) {
+                console.log("here")
+                followerCount = 0;
+            }
+            followerCount++;
+            console.log(followerCount)
+            const query = `UPDATE userdetails SET followerCount = "${followerCount}" WHERE UserId="${UserId}";`
+            connection.query(query, (err, results) => {
+                if(err)
+                {
+                    res.status(500).send(err);
+                }
+                else {
+                    const query = `UPDATE userdetails SET followers = CONCAT(followers, ",${follower}") WHERE UserId="${UserId}";`
+                    connection.query(query, (err, followerCount) => {
+                        if(err)
+                        {
+                            res.status(500).send(err);
+                        }
+                        else
+                        {                            
+                            res.status(200).send({ msg: results })
+
+                        }
+                    })
+                }
+            })
+            
+        }
+    })        
+})
+
+app.get("/followers", (req,res) => {
+    const UserId = req.query.UserId;
+    const query = `SELECT followers from userdetails WHERE UserId="${UserId}";`
+    connection.query(query, (err, results) => {
+        if (err) {
+            res.status(500).send(err);
+        }
+        else {
+            const followers = []
+            const result = str.split(',');
+            result.forEach(element => {
+                const query = `SELECT * from userdetails WHERE UserId="${element}";`
+                connection.query(query, (err, results) => {
+                    followers.push(results)
+            })            
+        })
+        res.status(200).send({ msg: followers})
+        }
+    })
+})
+
+//API to check if a person is already a follower or not 
+app.get("/is-follower", (req,res) => {
+    const followerId = req.query.followerId;
+    const UserId = req.query.UserId;
+    const query = `SELECT followers from userdetails WHERE UserId="${UserId}";`
+    connection.query(query, (err, results) => {
+        if (err) {
+            res.status(500).send(err);
+        }
+        else {
+            results = results[0].followers
+            if(results.includes(followerId)){
+                res.status(200).send({ msg: 1})
+            } else {
+                res.status(200).send({ msg: 0})
+            }            
+        }
+    })
+})
+
+//API to get friendCount
+
+//API to post friendRequest
+
+//API to accept/reject requests
+
+//API to get friendRequests
+
+//API to get friends
+
 function VerifyToken(req, res, next) {
     let token = req.headers['authorization'];
     if (token) {
