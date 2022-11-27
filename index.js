@@ -391,7 +391,6 @@ app.post("/follow", (req,res) => {
         {
             followerCount = followerCount[0].followerCount
             if (isNaN(followerCount)) {
-                console.log("here")
                 followerCount = 0;
             }
             followerCount++;
@@ -431,7 +430,7 @@ app.get("/followers", (req,res) => {
         }
         else {
             const followers = []
-            const result = str.split(',');
+            const result = results.split(',');
             result.forEach(element => {
                 const query = `SELECT * from userdetails WHERE UserId="${element}";`
                 connection.query(query, (err, results) => {
@@ -463,15 +462,137 @@ app.get("/is-follower", (req,res) => {
     })
 })
 
-//API to get friendCount
-
 //API to post friendRequest
+app.post("/connect", (req,res) => {
+    const connection = req.body.connectionId;
+    const UserId = req.body.UserId;
+    const query = `UPDATE userdetails SET pendingRequests = CONCAT(pendingRequests, ",${follower}") WHERE UserId="${UserId}";`
+    connection.query(query, (err, results) => {
+        if(err)
+        {
+            res.status(500).send(err);
+        }
+        else
+        {                            
+            res.status(200).send({ msg: results })
 
-//API to accept/reject requests
+        }
+    })           
+})
 
-//API to get friendRequests
+//API to check if a person is already a friend or not 
+app.get("/is-friend", (req,res) => {
+    const friendId = req.query.friendId;
+    const UserId = req.query.UserId;
+    const query = `SELECT friends from userdetails WHERE UserId="${UserId}";`
+    connection.query(query, (err, results) => {
+        if (err) {
+            res.status(500).send(err);
+        }
+        else {
+            results = results[0].friends
+            if(results.includes(friendId)){
+                res.status(200).send({ msg: 1})
+            } else {
+                res.status(200).send({ msg: 0})
+            }            
+        }
+    })
+})
+
+//TODO: API to accept requests
+app.post("/accept-request", (req,res) => {
+    const UserId = req.body.UserId;
+    const connectionId = req.body.connectionId;
+    const query = `UPDATE userdetails SET friends = CONCAT(friends, ",${connectionId}") WHERE UserId="${UserId}";`
+    connection.query(query, (err, results) => {
+        if (err) {
+            res.status(500).send(err);
+        }
+        else {
+            const requests = []
+            const result = results.split(',');
+            result.forEach(element => {
+                const query = `SELECT * from userdetails WHERE UserId="${element}";`
+                connection.query(query, (err, results) => {
+                    requests.push(results)
+            })            
+        })
+        res.status(200).send({ msg: requests})
+        }
+    })          
+})
+
+//TODO: API to reject requests
+app.get("/reject-request", (req,res) => {
+    const UserId = req.query.UserId;
+    const query = `SELECT pendingRequests from userdetails WHERE UserId="${UserId}";`
+    connection.query(query, (err, results) => {
+        if (err) {
+            res.status(500).send(err);
+        }
+        else {
+            const requests = []
+            const result = results.split(',');
+            result.forEach(element => {
+                const query = `SELECT * from userdetails WHERE UserId="${element}";`
+                connection.query(query, (err, results) => {
+                    requests.push(results)
+            })            
+        })
+        res.status(200).send({ msg: requests})
+        }
+    })          
+})
+
+//API to get pending friendRequests
+app.get("/connection-requests", (req,res) => {
+    const UserId = req.query.UserId;
+    const query = `SELECT pendingRequests from userdetails WHERE UserId="${UserId}";`
+    connection.query(query, (err, results) => {
+        if (err) {
+            res.status(500).send(err);
+        }
+        else {
+            const requests = []
+            const result = results.split(',');
+            result.forEach(element => {
+                const query = `SELECT * from userdetails WHERE UserId="${element}";`
+                connection.query(query, (err, results) => {
+                    if (err) {
+                        res.status(500).send(err);
+                    }
+                    else {
+                    requests.push(results)
+                    }
+            })            
+        })
+        res.status(200).send({ msg: requests})
+        }
+    })          
+})
 
 //API to get friends
+app.get("/friends", (req,res) => {
+    const UserId = req.query.UserId;
+    const query = `SELECT friends from userdetails WHERE UserId="${UserId}";`
+    connection.query(query, (err, results) => {
+        if (err) {
+            res.status(500).send(err);
+        }
+        else {
+            const friends = []
+            const result = str.split(',');
+            result.forEach(element => {
+                const query = `SELECT * from userdetails WHERE UserId="${element}";`
+                connection.query(query, (err, results) => {
+                    friends.push(results)
+            })            
+        })
+        res.status(200).send({ msg: friends})
+        }
+    })
+})
 
 function VerifyToken(req, res, next) {
     let token = req.headers['authorization'];
