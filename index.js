@@ -500,7 +500,6 @@ app.get("/is-friend", (req,res) => {
     })
 })
 
-//TODO: API to accept requests
 app.post("/accept-request", (req,res) => {
     const UserId = req.body.UserId;
     const connectionId = req.body.connectionId;
@@ -509,40 +508,40 @@ app.post("/accept-request", (req,res) => {
         if (err) {
             res.status(500).send(err);
         }
-        else {
-            const requests = []
-            const result = results.split(',');
-            result.forEach(element => {
-                const query = `SELECT * from userdetails WHERE UserId="${element}";`
-                connection.query(query, (err, results) => {
-                    requests.push(results)
+        else {            
+            const query = `UPDATE userdetails SET pendingRequests = REPLACE(pendingRequests, ${connectionId}, '') WHERE UserId="${element}";`
+            connection.query(query, (err, results) => {
+                if (err) {
+                    res.status(500).send(err);
+                }
+                else {                     
+                    const query = `UPDATE userdetails SET followers = CONCAT(followers, ",${follower}") WHERE UserId="${UserId}";`
+                    connection.query(query, (err, results) => {
+                        if (err) {
+                            res.status(500).send(err);
+                        }
+                        else { 
+                            res.status(200).send({ msg: results})
+                        }
+                    })        
+                }              
             })            
-        })
-        res.status(200).send({ msg: requests})
         }
     })          
 })
 
-//TODO: API to reject requests
 app.get("/reject-request", (req,res) => {
-    const UserId = req.query.UserId;
-    const query = `SELECT pendingRequests from userdetails WHERE UserId="${UserId}";`
+    const UserId = req.body.UserId;
+    const connectionId = req.body.connectionId;          
+    const query = `UPDATE userdetails SET pendingRequests = REPLACE(pendingRequests, ${connectionId}, '') WHERE UserId="${element}";`
     connection.query(query, (err, results) => {
         if (err) {
             res.status(500).send(err);
         }
-        else {
-            const requests = []
-            const result = results.split(',');
-            result.forEach(element => {
-                const query = `SELECT * from userdetails WHERE UserId="${element}";`
-                connection.query(query, (err, results) => {
-                    requests.push(results)
-            })            
-        })
-        res.status(200).send({ msg: requests})
-        }
-    })          
+        else {                     
+            res.status(200).send({ msg: results})
+        }              
+    })  
 })
 
 //API to get pending friendRequests
