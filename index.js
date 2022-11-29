@@ -617,8 +617,8 @@ app.get("/followers", (req, res) => {
     })
 
     app.post('/block', (req,res) => {
-        const UserId = req.query.UserId;
-        const connectionId = req.query.connectionId;
+        const UserId = req.body.UserId;
+        const connectionId = req.body.connectionId;
         const query = `UPDATE userdetails SET friends = REPLACE(friends, ${connectionId}, '') WHERE UserId="${UserId}";`
         connection.query(query, (err, results) => {
             if (err) {
@@ -636,6 +636,21 @@ app.get("/followers", (req, res) => {
                 })                                
             }
         })         
+
+    })
+
+    app.get('/users', (req,res) => {
+        const FirstName  = req.query.UserName
+        const query = `SELECT * FROM userdetails WHERE FirstName LIKE '%${FirstName}%'`
+        console.log(query)
+        connection.query(query, (err,results) => {
+            if (err) {
+                console.log(err);
+            } else {
+                console.log(results)
+                res.status(200).send({ msg: results})
+            }
+        })
 
     })
 
