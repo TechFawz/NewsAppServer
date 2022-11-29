@@ -448,9 +448,9 @@ app.get("/followers", (req, res) => {
 
     //API to post friendRequest
     app.post("/connect", (req, res) => {
-        const connection = req.body.connectionId;
+        const connectionId = req.body.connectionId;
         const UserId = req.body.UserId;
-        const query = `UPDATE userdetails SET pendingRequests = CONCAT(pendingRequests, ",${follower}") WHERE UserId="${UserId}";`
+        const query = `UPDATE userdetails SET pendingRequests = CONCAT(pendingRequests, ",${connectionId}") WHERE UserId="${UserId}";`
         connection.query(query, (err, results) => {
             if (err) {
                 res.status(500).send(err);
@@ -464,7 +464,7 @@ app.get("/followers", (req, res) => {
 
     //API to check if a person is already a friend or not 
     app.get("/is-friend", (req, res) => {
-        const friendId = req.query.friendId;
+        const connectionId = req.query.connectionId;
         const UserId = req.query.UserId;
         const query = `SELECT friends from userdetails WHERE UserId="${UserId}";`
         connection.query(query, (err, results) => {
@@ -472,8 +472,9 @@ app.get("/followers", (req, res) => {
                 res.status(500).send(err);
             }
             else {
+                console.log(results)
                 results = results[0].friends
-                if (results.includes(friendId)) {
+                if (results.includes(connectionId)) {
                     res.status(200).send({ msg: 1 })
                 } else {
                     res.status(200).send({ msg: 0 })
@@ -491,13 +492,13 @@ app.get("/followers", (req, res) => {
                 res.status(500).send(err);
             }
             else {
-                const query = `UPDATE userdetails SET pendingRequests = REPLACE(pendingRequests, ${connectionId}, '') WHERE UserId="${element}";`
+                const query = `UPDATE userdetails SET pendingRequests = REPLACE(pendingRequests, ${connectionId}, '') WHERE UserId="${UserId}";`
                 connection.query(query, (err, results) => {
                     if (err) {
                         res.status(500).send(err);
                     }
                     else {
-                        const query = `UPDATE userdetails SET followers = CONCAT(followers, ",${follower}") WHERE UserId="${UserId}";`
+                        const query = `UPDATE userdetails SET followers = CONCAT(followers, ",${connectionId}") WHERE UserId="${UserId}";`
                         connection.query(query, (err, results) => {
                             if (err) {
                                 res.status(500).send(err);
@@ -512,10 +513,10 @@ app.get("/followers", (req, res) => {
         })
     })
 
-    app.get("/reject-request", (req, res) => {
+    app.post("/reject-request", (req, res) => {
         const UserId = req.body.UserId;
         const connectionId = req.body.connectionId;
-        const query = `UPDATE userdetails SET pendingRequests = REPLACE(pendingRequests, ${connectionId}, '') WHERE UserId="${element}";`
+        const query = `UPDATE userdetails SET pendingRequests = REPLACE(pendingRequests, ${connectionId}, '') WHERE UserId="${UserId}";`
         connection.query(query, (err, results) => {
             if (err) {
                 res.status(500).send(err);
@@ -536,7 +537,8 @@ app.get("/followers", (req, res) => {
             }
             else {
                 const requests = []
-                const result = results.split(',');
+                const result = (results[0].pendingRequests).split(',');
+                const result_size = result.length;
                 result.forEach(element => {
                     const query = `SELECT * from userdetails WHERE UserId="${element}";`
                     connection.query(query, (err, results) => {
@@ -545,10 +547,13 @@ app.get("/followers", (req, res) => {
                         }
                         else {
                             requests.push(results)
+                            if (result_size == requests.length){
+                                res.status(200).send({ msg: requests })
+                            } 
                         }
                     })
                 })
-                res.status(200).send({ msg: requests })
+
             }
         })
     })
@@ -563,14 +568,17 @@ app.get("/followers", (req, res) => {
             }
             else {
                 const friends = []
-                const result = str.split(',');
+                const result = (results[0].friends).split(',');
+                const result_size = result.length;
                 result.forEach(element => {
                     const query = `SELECT * from userdetails WHERE UserId="${element}";`
                     connection.query(query, (err, results) => {
                         friends.push(results)
+                        if(result_size === friends.length) {
+                            res.status(200).send({ msg: friends })
+                        }
                     })
                 })
-                res.status(200).send({ msg: friends })
             }
         })
     })
@@ -593,6 +601,43 @@ app.get("/followers", (req, res) => {
             res.status(403).send({ result: "Please Add Token With Header" });
         }
     }
+
+    app.get('/userDetails', (req,res) => {
+        const UserId = req.query.UserId;
+        const query = `SELECT * from userdetails WHERE UserId="${UserId}";`
+        connection.query(query, (err, results) => {
+            if (err) {
+                res.status(500).send(err);
+            }
+            else {
+                console.log(results)
+                res.status(200).send({ msg: results[0]})
+            }
+        })        
+    })
+
+    app.post('/block', (req,res) => {
+        const UserId = req.query.UserId;
+        const connectionId = req.query.connectionId;
+        const query = `UPDATE userdetails SET friends = REPLACE(friends, ${connectionId}, '') WHERE UserId="${UserId}";`
+        connection.query(query, (err, results) => {
+            if (err) {
+                res.status(500).send(err);
+            }
+            else {
+                const query = `UPDATE userdetails SET followers = REPLACE(followers, ${connectionId}, '') WHERE UserId="${UserId}";`
+                connection.query(query, (err, results) => {
+                    if (err) {
+                        res.status(500).send(err);
+                    }
+                    else {
+                        res.status(200).send({ msg: 'blocked'})
+                    }
+                })                                
+            }
+        })         
+
+    })
 
     app.listen(port, () => {
         console.log(`listening on port ${port}`)
