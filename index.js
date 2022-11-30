@@ -657,13 +657,13 @@ app.get('/userDetails', (req, res) => {
 app.post('/block', (req, res) => {
     const UserId = req.body.UserId;
     const connectionId = req.body.connectionId;
-    const query = `UPDATE userdetails SET friends = REPLACE(friends, ${connectionId}, '') WHERE UserId="${UserId}";`
+    const query = `UPDATE userdetails SET friends = REPLACE(friends, "${connectionId}", '') WHERE UserId="${UserId}";`
     connection.query(query, (err, results) => {
         if (err) {
             res.status(500).send(err);
         }
         else {
-            const query = `UPDATE userdetails SET followers = REPLACE(followers, ${connectionId}, '') WHERE UserId="${UserId}";`
+            const query = `UPDATE userdetails SET followers = REPLACE(followers, "${connectionId}", '') WHERE UserId="${UserId}";`
             connection.query(query, (err, results) => {
                 if (err) {
                     res.status(500).send(err);
