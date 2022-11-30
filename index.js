@@ -253,7 +253,8 @@ app.get("/edit_password", (req, res) => {
 
 app.post("/rate", (req, res) => {
     const data = req.body
-    connection.query(`INSERT INTO news_cards VALUES ("${data.UserId}", "${data.author}", "${data.content}", "${data.description}", "${data.publishedAt}", "${data.title}", "${data.url}", "${data.urlToImage}", "${data.ratings}", "${data.watchList}");`, (err, results) => {
+    const query = `INSERT INTO news_cards (ratings, watchList, url, urlToImage, UserId, author, content, description, publishedAt, title) VALUES (${data.ratings}, ${data.watchList}, "${data.url}", "${data.urlToImage}", "${data.UserId}","${data.author}", "${data.content}", "${data.description}", "${data.publishedAt}", "${data.title}");`    
+    connection.query(query, (err, results) => {
         if (err) {
             res.status(500).send(err);
         }
@@ -277,8 +278,11 @@ app.get("/rate", (req, res) => {
 
 app.post("/watch", (req, res) => {
     const data = req.body
-    connection.query(`INSERT INTO news_cards VALUES ("${data.UserId}", "${data.author}", "${data.content}", "${data.description}", "${data.publishedAt}", "${data.title}", "${data.url}", "${data.urlToImage}", "${data.ratings}", "${data.watchList}");`, (err, results) => {
+    const query = `INSERT INTO news_cards (ratings, watchList, url, urlToImage, UserId, author, content, description, publishedAt, title) VALUES (${data.ratings}, ${data.watchList}, "${data.url}", "${data.urlToImage}", "${data.UserId}","${data.author}", "${data.content}", "${data.description}", "${data.publishedAt}", "${data.title}");`
+    console.log(query)
+    connection.query(query, (err, results) => {
         if (err) {
+            console.log(err);
             res.status(500).send(err);
         }
         else {
