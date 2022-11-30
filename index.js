@@ -30,7 +30,7 @@ app.get('/', (req, res) => {
 app.get("/check_login", (req, res) => {
 
     const data = req.query;
-    connection.query(`select UserId from userdetails where MailId = "${data.id}" && Passsword = "${data.password}"; `, (err, result) => {
+    connection.query(`select UserId from userdetails where MailId = "${data.id}" && Password = "${data.password}"; `, (err, result) => {
         if (err) {
             res.status(401).send();
         }
@@ -69,7 +69,7 @@ app.get("/check_google_login", (req, res) => {
             var UserId = `GI-${data.googleId}`;
             if (result.length == 0) {
 
-                connection.query(`INSERT INTO userdetails (FirstName, MailId , Passsword , UserId,profile_url) VALUES ('${data.name}', '${data.email}', 'Google Login', "GI-${data.googleId}","${data.imageUrl}");`, (errr, resu) => {
+                connection.query(`INSERT INTO userdetails (FirstName, MailId , Password , UserId,profile_url) VALUES ('${data.name}', '${data.email}', 'Google Login', "GI-${data.googleId}","${data.imageUrl}");`, (errr, resu) => {
 
                     if (errr) {
                         res.status(401).send();
@@ -117,7 +117,7 @@ app.get("/sign_up", (req, res) => {
         }
         else {
             if (result.length == 0) {
-                connection.query(`INSERT INTO userdetails (FirstName, MailId , Passsword , UserId) VALUES ('${data.FirstName}', '${data.MailId}', '${data.Password}', "NA-${data.MailId}");`, (errr, results) => {
+                connection.query(`INSERT INTO userdetails (FirstName, MailId , Password , UserId) VALUES ('${data.FirstName}', '${data.MailId}', '${data.Password}', "NA-${data.MailId}");`, (errr, results) => {
                     if (errr) {
                         res.status(401).send();
 
@@ -227,7 +227,7 @@ app.get("/edit_user_data", VerifyToken, (req, res) => {
 app.get("/edit_password", (req, res) => {
     const data = req.query;
     if (data.UserId.split("-")[0] == "GI") {
-        connection.query(`UPDATE userdetails SET Passsword="${data.NewPassword}" WHERE UserId="${data.UserId}";`, (errr, results) => {
+        connection.query(`UPDATE userdetails SET Password="${data.NewPassword}" WHERE UserId="${data.UserId}";`, (errr, results) => {
             if (errr) {
                 res.status(401).send();
             }
@@ -239,7 +239,7 @@ app.get("/edit_password", (req, res) => {
     }
     else {
 
-        connection.query(`UPDATE userdetails SET Passsword="${data.NewPassword}" WHERE UserId="${data.UserId}" and Passsword="${data.OldPassword}";`, (errr, results) => {
+        connection.query(`UPDATE userdetails SET Password="${data.NewPassword}" WHERE UserId="${data.UserId}" and Password="${data.OldPassword}";`, (errr, results) => {
             if (errr) {
                 res.status(401).send();
             }
@@ -253,7 +253,7 @@ app.get("/edit_password", (req, res) => {
 
 app.post("/rate", (req, res) => {
     const data = req.body
-    const query = `INSERT INTO news_cards (ratings, watchList, url, urlToImage, UserId, author, content, description, publishedAt, title) VALUES (${data.ratings}, ${data.watchList}, "${data.url}", "${data.urlToImage}", "${data.UserId}","${data.author}", "${data.content}", "${data.description}", "${data.publishedAt}", "${data.title}");`    
+    const query = `INSERT INTO news_cards (ratings, watchList, url, urlToImage, UserId, author, content, description, publishedAt, title) VALUES (${data.ratings}, ${data.watchList}, "${data.url}", "${data.urlToImage}", "${data.UserId}","${data.author}", "${data.content}", "${data.description}", "${data.publishedAt}", "${data.title}");`
     connection.query(query, (err, results) => {
         if (err) {
             res.status(500).send(err);
@@ -331,7 +331,7 @@ app.post("/send_invite", async (req, res) => {
 
 app.post("/user-category", (req, res) => {
     const newsCategories = (req.body.newsCategories).join();
-    const UserId = req.query.UserId;
+    const UserId = req.body.UserId;
     console.log(newsCategories)
     console.log(UserId)
     const query = `UPDATE userdetails SET newsCategories="${newsCategories}" WHERE UserId="${UserId}";`
@@ -349,13 +349,18 @@ app.post("/user-category", (req, res) => {
 app.get("/user-category", (req, res) => {
     const UserId = req.query.UserId;
     const query = `SELECT newsCategories from userdetails WHERE UserId="${UserId}";`
+    let newsCategories
     connection.query(query, (err, results) => {
         if (err) {
             res.status(500).send(err);
         }
         else {
-            console.log(results[0].newsCategories)
-            const newsCategories = (results[0].newsCategories).split(',');
+            if (results[0].newsCategories) {
+                newsCategories = (results[0].newsCategories).split(',');
+            } else {
+                newsCategories = ['IT', 'Drone', 'Electronics']
+            }
+
             res.status(200).send({ msg: newsCategories })
         }
     })
@@ -418,11 +423,11 @@ app.get("/followers", (req, res) => {
                     if (err) {
                         res.status(500).send(err);
                     } else {
-                            followers.push(result[0])
-                            console.log(followers)
-                            if (result_size === followers.length) {
-                                res.status(200).send({ msg: followers })
-                            }                            
+                        followers.push(result[0])
+                        console.log(followers)
+                        if (result_size === followers.length) {
+                            res.status(200).send({ msg: followers })
+                        }
                     }
                 })
             }
@@ -430,239 +435,269 @@ app.get("/followers", (req, res) => {
     })
 })
 
-    //API to check if a person is already a follower or not 
-    app.get("/is-follower", (req, res) => {
-        const followerId = req.query.followerId;
-        const UserId = req.query.UserId;
-        const query = `SELECT followers from userdetails WHERE UserId="${UserId}";`
-        connection.query(query, (err, results) => {
-            if (err) {
-                res.status(500).send(err);
+//API to check if a person is already a follower or not 
+app.get("/is-follower", (req, res) => {
+    const followerId = req.query.followerId;
+    const UserId = req.query.UserId;
+    const query = `SELECT followers from userdetails WHERE UserId="${UserId}";`
+    connection.query(query, (err, results) => {
+        if (err) {
+            res.status(500).send(err);
+        }
+        else {
+            results = results[0].followers
+            if (results.includes(followerId)) {
+                res.status(200).send({ msg: 1 })
+            } else {
+                res.status(200).send({ msg: 0 })
             }
-            else {
-                results = results[0].followers
-                if (results.includes(followerId)) {
-                    res.status(200).send({ msg: 1 })
-                } else {
-                    res.status(200).send({ msg: 0 })
+        }
+    })
+})
+
+app.get("/is-pending", (req, res) => {
+    const connectionId = req.query.connectionId;
+    const UserId = req.query.UserId;
+    const query = `SELECT pendingRequests from userdetails WHERE UserId="${UserId}";`
+    connection.query(query, (err, results) => {
+        if (err) {
+            res.status(500).send(err);
+        }
+        else {
+            results = results[0].pendingRequests
+            if (results.includes(connectionId)) {
+                res.status(200).send({ msg: 1 })
+            } else {
+                res.status(200).send({ msg: 0 })
+            }
+        }
+    })
+})
+
+//API to post friendRequest
+app.post("/connect", (req, res) => {
+    const connectionId = req.body.connectionId;
+    const UserId = req.body.UserId;
+    const query = `UPDATE userdetails SET pendingRequests = CONCAT(pendingRequests, ",${connectionId}") WHERE UserId="${UserId}";`
+    connection.query(query, (err, results) => {
+        if (err) {
+            res.status(500).send(err);
+        }
+        else {
+            res.status(200).send({ msg: results })
+
+        }
+    })
+})
+
+//API to check if a person is already a friend or not 
+app.get("/is-friend", (req, res) => {
+    const connectionId = req.query.connectionId;
+    const UserId = req.query.UserId;
+    const query = `SELECT friends from userdetails WHERE UserId="${UserId}";`
+    connection.query(query, (err, results) => {
+        if (err) {
+            res.status(500).send(err);
+        }
+        else {
+            console.log(results)
+            results = results[0].friends
+            if (results.includes(connectionId)) {
+                res.status(200).send({ msg: 1 })
+            } else {
+                res.status(200).send({ msg: 0 })
+            }
+        }
+    })
+})
+
+app.post("/accept-request", (req, res) => {
+    const UserId = req.body.UserId;
+    const connectionId = req.body.connectionId;
+    const query = `UPDATE userdetails SET friends = CONCAT(friends, ",${connectionId}") WHERE UserId="${UserId}";`
+    console.log(query)
+    connection.query(query, (err, results) => {
+        if (err) {
+            res.status(500).send(err);
+        }
+        else {
+            const query = `UPDATE userdetails SET friends = CONCAT(friends, ",${UserId}") WHERE UserId="${connectionId}";`
+            connection.query(query, (err, results) => {
+                if (err) {
+                    res.status(500).send(err);
                 }
-            }
-        })
-    })
-
-    //API to post friendRequest
-    app.post("/connect", (req, res) => {
-        const connectionId = req.body.connectionId;
-        const UserId = req.body.UserId;
-        const query = `UPDATE userdetails SET pendingRequests = CONCAT(pendingRequests, ",${connectionId}") WHERE UserId="${UserId}";`
-        connection.query(query, (err, results) => {
-            if (err) {
-                res.status(500).send(err);
-            }
-            else {
-                res.status(200).send({ msg: results })
-
-            }
-        })
-    })
-
-    //API to check if a person is already a friend or not 
-    app.get("/is-friend", (req, res) => {
-        const connectionId = req.query.connectionId;
-        const UserId = req.query.UserId;
-        const query = `SELECT friends from userdetails WHERE UserId="${UserId}";`
-        connection.query(query, (err, results) => {
-            if (err) {
-                res.status(500).send(err);
-            }
-            else {
-                console.log(results)
-                results = results[0].friends
-                if (results.includes(connectionId)) {
-                    res.status(200).send({ msg: 1 })
-                } else {
-                    res.status(200).send({ msg: 0 })
-                }
-            }
-        })
-    })
-
-    app.post("/accept-request", (req, res) => {
-        const UserId = req.body.UserId;
-        const connectionId = req.body.connectionId;
-        const query = `UPDATE userdetails SET friends = CONCAT(friends, ",${connectionId}") WHERE UserId="${UserId}";`
-        console.log(query)
-        connection.query(query, (err, results) => {
-            if (err) {
-                res.status(500).send(err);
-            }
-            else {
-                const query = `UPDATE userdetails SET pendingRequests = REPLACE(pendingRequests, "${connectionId}", '') WHERE UserId="${UserId}";`
-                connection.query(query, (err, results) => {
-                    if (err) {
-                        res.status(500).send(err);
-                    }
-                    else {
-                        const query = `UPDATE userdetails SET followers = CONCAT(followers, ",${connectionId}") WHERE UserId="${UserId}";`
-                        connection.query(query, (err, results) => {
-                            if (err) {
-                                res.status(500).send(err);
-                            }
-                            else {
-                                res.status(200).send({ msg: results })
-                            }
-                        })
-                    }
-                })
-            }
-        })
-    })
-
-    app.post("/reject-request", (req, res) => {
-        const UserId = req.body.UserId;
-        const connectionId = req.body.connectionId;
-        const query = `UPDATE userdetails SET pendingRequests = REPLACE(pendingRequests, "${connectionId}", '') WHERE UserId="${UserId}";`
-        console.log(query)
-        connection.query(query, (err, results) => {
-            if (err) {
-                res.status(500).send(err);
-            }
-            else {
-                res.status(200).send({ msg: results })
-            }
-        })
-    })
-
-    //API to get pending friendRequests
-    app.get("/connection-requests", (req, res) => {
-        const UserId = req.query.UserId;
-        const query = `SELECT pendingRequests from userdetails WHERE UserId="${UserId}";`
-        connection.query(query, (err, results) => {
-            if (err) {
-                res.status(500).send(err);
-            }
-            else {
-                const requests = []
-                const result = (results[0].pendingRequests).split(',');
-                const result_size = result.length;
-                result.forEach(element => {
-                    const query = `SELECT * from userdetails WHERE UserId="${element}";`
+                else {
+                    const query = `UPDATE userdetails SET pendingRequests = REPLACE(pendingRequests, "${connectionId}", '') WHERE UserId="${UserId}";`
                     connection.query(query, (err, results) => {
                         if (err) {
                             res.status(500).send(err);
                         }
                         else {
-                            requests.push(results)
-                            if (result_size == requests.length){
-                                res.status(200).send({ msg: requests })
-                            } 
+                            const query = `UPDATE userdetails SET followers = CONCAT(followers, ",${connectionId}") WHERE UserId="${UserId}";`
+                            connection.query(query, (err, results) => {
+                                if (err) {
+                                    res.status(500).send(err);
+                                }
+                                else {
+                                    res.status(200).send({ msg: results })
+                                }
+                            })
                         }
                     })
-                })
-
-            }
-        })
-    })
-
-    //API to get friends
-    app.get("/friends", (req, res) => {
-        const UserId = req.query.UserId;
-        const query = `SELECT friends from userdetails WHERE UserId="${UserId}";`
-        connection.query(query, (err, results) => {
-            if (err) {
-                res.status(500).send(err);
-            }
-            else {
-                const friends = []
-                const result = (results[0].friends).split(',');
-                const result_size = result.length;
-                result.forEach(element => {
-                    const query = `SELECT * from userdetails WHERE UserId="${element}";`
-                    connection.query(query, (err, results) => {
-                        friends.push(results)
-                        if(result_size === friends.length) {
-                            res.status(200).send({ msg: friends })
-                        }
-                    })
-                })
-            }
-        })
-    })
-
-    function VerifyToken(req, res, next) {
-        let token = req.headers['authorization'];
-        if (token) {
-            Jwt.verify(token, jwtKey, (err, vaild) => {
-                if (err) {
-                    res.status(401).send({ result: "Please Add Correct Token With Header" });
-
                 }
-                else {
-                    next();
-                }
-
             })
         }
-        else {
-            res.status(403).send({ result: "Please Add Token With Header" });
-        }
-    }
-
-    app.get('/userDetails', (req,res) => {
-        const UserId = req.query.UserId;
-        const query = `SELECT * from userdetails WHERE UserId="${UserId}";`
-        connection.query(query, (err, results) => {
-            if (err) {
-                res.status(500).send(err);
-            }
-            else {
-                console.log(results)
-                res.status(200).send({ msg: results[0]})
-            }
-        })        
     })
+})
 
-    app.post('/block', (req,res) => {
-        const UserId = req.body.UserId;
-        const connectionId = req.body.connectionId;
-        const query = `UPDATE userdetails SET friends = REPLACE(friends, ${connectionId}, '') WHERE UserId="${UserId}";`
-        connection.query(query, (err, results) => {
-            if (err) {
-                res.status(500).send(err);
-            }
-            else {
-                const query = `UPDATE userdetails SET followers = REPLACE(followers, ${connectionId}, '') WHERE UserId="${UserId}";`
+app.post("/reject-request", (req, res) => {
+    const UserId = req.body.UserId;
+    const connectionId = req.body.connectionId;
+    const query = `UPDATE userdetails SET pendingRequests = REPLACE(pendingRequests, "${connectionId}", '') WHERE UserId="${UserId}";`
+    console.log(query)
+    connection.query(query, (err, results) => {
+        if (err) {
+            res.status(500).send(err);
+        }
+        else {
+            res.status(200).send({ msg: results })
+        }
+    })
+})
+
+//API to get pending friendRequests
+app.get("/connection-requests", (req, res) => {
+    const UserId = req.query.UserId;
+    const query = `SELECT pendingRequests from userdetails WHERE UserId="${UserId}";`
+    connection.query(query, (err, results) => {
+        if (err) {
+            res.status(500).send(err);
+        }
+        else {
+            const requests = []
+            const result = (results[0].pendingRequests).split(',');
+            const result_size = result.length;
+            result.forEach(element => {
+                const query = `SELECT * from userdetails WHERE UserId="${element}";`
                 connection.query(query, (err, results) => {
                     if (err) {
                         res.status(500).send(err);
                     }
                     else {
-                        res.status(200).send({ msg: 'blocked'})
+                        requests.push(results)
+                        if (result_size == requests.length) {
+                            res.status(200).send({ msg: requests })
+                        }
                     }
-                })                                
-            }
-        })         
+                })
+            })
 
+        }
     })
+})
 
-    app.get('/users', (req,res) => {
-        const FirstName  = req.query.UserName
-        const query = `SELECT * FROM userdetails WHERE FirstName LIKE '%${FirstName}%'`
-        console.log(query)
-        connection.query(query, (err,results) => {
+//API to get friends
+app.get("/friends", (req, res) => {
+    const UserId = req.query.UserId;
+    const query = `SELECT friends from userdetails WHERE UserId="${UserId}";`
+    connection.query(query, (err, results) => {
+        if (err) {
+            res.status(500).send(err);
+        }
+        else {
+            const friends = []
+            const result = (results[0].friends).split(',');
+            const result_size = result.length;
+            result.forEach(element => {
+                const query = `SELECT * from userdetails WHERE UserId="${element}";`
+                connection.query(query, (err, results) => {
+                    friends.push(results)
+                    if (result_size === friends.length) {
+                        res.status(200).send({ msg: friends })
+                    }
+                })
+            })
+        }
+    })
+})
+
+function VerifyToken(req, res, next) {
+    let token = req.headers['authorization'];
+    if (token) {
+        Jwt.verify(token, jwtKey, (err, vaild) => {
             if (err) {
-                console.log(err);
-            } else {
-                console.log(results)
-                res.status(200).send({ msg: results})
+                res.status(401).send({ result: "Please Add Correct Token With Header" });
+
             }
+            else {
+                next();
+            }
+
         })
+    }
+    else {
+        res.status(403).send({ result: "Please Add Token With Header" });
+    }
+}
 
+app.get('/userDetails', (req, res) => {
+    const UserId = req.query.UserId;
+    const query = `SELECT * from userdetails WHERE UserId="${UserId}";`
+    connection.query(query, (err, results) => {
+        if (err) {
+            res.status(500).send(err);
+        }
+        else {
+            console.log(results)
+            res.status(200).send({ msg: results[0] })
+        }
+    })
+})
+
+app.post('/block', (req, res) => {
+    const UserId = req.body.UserId;
+    const connectionId = req.body.connectionId;
+    const query = `UPDATE userdetails SET friends = REPLACE(friends, ${connectionId}, '') WHERE UserId="${UserId}";`
+    connection.query(query, (err, results) => {
+        if (err) {
+            res.status(500).send(err);
+        }
+        else {
+            const query = `UPDATE userdetails SET followers = REPLACE(followers, ${connectionId}, '') WHERE UserId="${UserId}";`
+            connection.query(query, (err, results) => {
+                if (err) {
+                    res.status(500).send(err);
+                }
+                else {
+                    res.status(200).send({ msg: 'blocked' })
+                }
+            })
+        }
     })
 
-    app.listen(port, () => {
-        console.log(`listening on port ${port}`)
+})
+
+app.get('/users', (req, res) => {
+    const FirstName = req.query.UserName
+    const query = `SELECT * FROM userdetails WHERE FirstName LIKE '%${FirstName}%'`
+    connection.query(query, (err, results) => {
+        if (err) {
+            console.log(err);
+        } else {
+            console.log(results)
+            if (!results) {
+                const query = `SELECT * FROM userdetails WHERE Location LIKE '%${FirstName}%'`
+
+            }
+            res.status(200).send({ msg: results })
+        }
     })
+
+})
+
+app.listen(port, () => {
+    console.log(`listening on port ${port}`)
+})
 
 
 
