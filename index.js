@@ -491,12 +491,13 @@ app.get("/followers", (req, res) => {
         const UserId = req.body.UserId;
         const connectionId = req.body.connectionId;
         const query = `UPDATE userdetails SET friends = CONCAT(friends, ",${connectionId}") WHERE UserId="${UserId}";`
+        console.log(query)
         connection.query(query, (err, results) => {
             if (err) {
                 res.status(500).send(err);
             }
             else {
-                const query = `UPDATE userdetails SET pendingRequests = REPLACE(pendingRequests, ${connectionId}, '') WHERE UserId="${UserId}";`
+                const query = `UPDATE userdetails SET pendingRequests = REPLACE(pendingRequests, "${connectionId}", '') WHERE UserId="${UserId}";`
                 connection.query(query, (err, results) => {
                     if (err) {
                         res.status(500).send(err);
@@ -520,7 +521,8 @@ app.get("/followers", (req, res) => {
     app.post("/reject-request", (req, res) => {
         const UserId = req.body.UserId;
         const connectionId = req.body.connectionId;
-        const query = `UPDATE userdetails SET pendingRequests = REPLACE(pendingRequests, ${connectionId}, '') WHERE UserId="${UserId}";`
+        const query = `UPDATE userdetails SET pendingRequests = REPLACE(pendingRequests, "${connectionId}", '') WHERE UserId="${UserId}";`
+        console.log(query)
         connection.query(query, (err, results) => {
             if (err) {
                 res.status(500).send(err);
@@ -661,3 +663,6 @@ app.get("/followers", (req, res) => {
     app.listen(port, () => {
         console.log(`listening on port ${port}`)
     })
+
+
+
