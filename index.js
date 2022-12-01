@@ -698,7 +698,25 @@ app.get('/users/news', (req, res) => {
         if (err) {
             console.log(err);
         } else {
-            res.status(200).send({ msg: results })
+            const result_size = results.length;
+            const requests = []
+            results.forEach(element => {
+                const query = `SELECT * from userdetails WHERE UserId="${element.UserId}";`
+                console.log(query)
+                connection.query(query, (err, results) => {
+                    if (err) {
+                        res.status(500).send(err);
+                    }
+                    else {
+                        requests.push(results)
+                        console.log(requests)
+                        if (result_size == requests.length) {
+                            res.status(200).send({ msg: requests })
+                        }
+                    }
+                })
+            })
+            //res.status(200).send({ msg: results })
         }
     })
 })
