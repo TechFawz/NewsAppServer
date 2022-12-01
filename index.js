@@ -116,7 +116,7 @@ app.get("/sign_up", (req, res) => {
         }
         else {
             if (result.length == 0) {
-                connection.query(`INSERT INTO userdetails (FirstName, MailId , Password , UserId, Location) VALUES ('${data.FirstName}', '${data.MailId}', '${data.Password}', "NA-${data.MailId}", "${data.Location}");`, (errr, results) => {
+                connection.query(`INSERT INTO userdetails (FirstName, MailId , Password , UserId, location) VALUES ('${data.FirstName}', '${data.MailId}', '${data.Password}', "NA-${data.MailId}", "${data.Location}");`, (errr, results) => {
                     if (errr) {
                         res.status(401).send();
 
