@@ -677,22 +677,40 @@ app.post('/block', (req, res) => {
 
 })
 
-app.get('/users', (req, res) => {
+app.get('/users/name', (req, res) => {
     const FirstName = req.query.UserName
     const query = `SELECT * FROM userdetails WHERE FirstName LIKE '%${FirstName}%'`
     connection.query(query, (err, results) => {
         if (err) {
             console.log(err);
         } else {
-            console.log(results)
-            if (!results) {
-                const query = `SELECT * FROM userdetails WHERE Location LIKE '%${FirstName}%'`
-
-            }
             res.status(200).send({ msg: results })
         }
     })
+})
 
+app.get('/users/location', (req, res) => {
+    const location = req.query.location
+    const query = `SELECT * FROM userdetails WHERE location LIKE '%${location}%'`
+    connection.query(query, (err, results) => {
+        if (err) {
+            console.log(err);
+        } else {
+            res.status(200).send({ msg: results })
+        }
+    })
+})
+
+app.get('/users/news', (req, res) => {
+    const title = req.query.title
+    const query = `SELECT * FROM news_cards WHERE title LIKE '%${title}%'`
+    connection.query(query, (err, results) => {
+        if (err) {
+            console.log(err);
+        } else {
+            res.status(200).send({ msg: results })
+        }
+    })
 })
 
 app.listen(port, () => {
