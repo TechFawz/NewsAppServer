@@ -533,18 +533,10 @@ app.post("/accept-request", (req, res) => {
                             res.status(500).send(err);
                         }
                         else {
-                            const query = `UPDATE userdetails SET followers = CONCAT(followers, ",${connectionId}") WHERE UserId="${UserId}";`
-                            connection.query(query, (err, results) => {
-                                if (err) {
-                                    res.status(500).send(err);
-                                }
-                                else {
-                                    res.status(200).send({ msg: results })
-                                }
-                            })
-                        }
-                    })
-                }
+                            res.status(200).send({ msg: results })                
+                            }
+                        })
+                    }                
             })
         }
     })
