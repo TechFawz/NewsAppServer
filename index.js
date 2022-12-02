@@ -116,7 +116,7 @@ app.get("/sign_up", (req, res) => {
         }
         else {
             if (result.length == 0) {
-                connection.query(`INSERT INTO userdetails (FirstName, MailId , Password , UserId, location) VALUES ('${data.FirstName}', '${data.MailId}', '${data.Password}', "NA-${data.MailId}", "${data.Location}");`, (errr, results) => {
+                connection.query(`INSERT INTO userdetails (FirstName, MailId , Password , UserId, location, number) VALUES ('${data.FirstName}', '${data.MailId}', '${data.Password}', "NA-${data.MailId}", "${data.Location}", "${data.number}");`, (errr, results) => {
                     if (errr) {
                         res.status(401).send();
 
@@ -720,6 +720,7 @@ app.get('/users/news', (req, res) => {
         }
     })
 })
+
 
 app.listen(port, () => {
     console.log(`listening on port ${port}`)
