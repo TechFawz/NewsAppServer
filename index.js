@@ -16,7 +16,7 @@ app.use(express.json())
 var connection = mysql.createConnection({
     host: "localhost",
     user: "root",
-    password: "password",
+    password: "root",
     database: "project20222402",
     insecureAuth: true
 });
@@ -693,30 +693,33 @@ app.get('/users/location', (req, res) => {
 
 app.get('/users/news', (req, res) => {
     const title = req.query.title
-    const query = `SELECT * FROM news_cards WHERE title LIKE '%${title}%'`
+    const query = `SELECT * FROM news_cards WHERE title LIKE "%${title}%";`
     connection.query(query, (err, results) => {
         if (err) {
             console.log(err);
         } else {
             const result_size = results.length;
             const requests = []
-            results.forEach(element => {
-                const query = `SELECT * from userdetails WHERE UserId="${element.UserId}";`
-                console.log(query)
-                connection.query(query, (err, results) => {
-                    if (err) {
-                        res.status(500).send(err);
-                    }
-                    else {
-                        requests.push(results)
-                        console.log(requests)
-                        if (result_size == requests.length) {
-                            res.status(200).send({ msg: requests })
+            if(result_size) {
+                results.forEach(element => {
+                    const query = `SELECT * from userdetails WHERE UserId="${element.UserId}";`
+                    console.log(query)
+                    connection.query(query, (err, results) => {
+                        if (err) {
+                            res.status(500).send(err);
                         }
-                    }
+                        else {
+                            requests.push(results)
+                            console.log(requests)
+                            if (result_size == requests.length) {
+                                res.status(200).send({ msg: requests })
+                            }
+                        }
+                    })
                 })
-            })
-            //res.status(200).send({ msg: results })
+            } else {
+            res.status(200).send({ msg: [] })
+            }
         }
     })
 })
